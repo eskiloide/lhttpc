@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] 
+
+### Added
+- type specs to all functions [Sérgio Almeida]
+
+### Changed
+- [dep.] `tls_certificate_check` from 1.21.0 to 1.35.0 [Sérgio Almeida]
+- CI to run on OTP 26 to 29 [Sérgio Almeida]
+- unexpected request failures to be reported 
+  as `{error, Reason}` instead of `{error, {Reason, Stacktrace}}` [Sérgio Almeida]
+
+### Fixed
+- TLS connections rejected with `{verify_ssl_cert, false}` on OTP 26 and later [Sérgio Almeida]
+- `elvis.config` to the `elvis_core` 6.x format [Sérgio Almeida]
+
+### Removed
+- compatibility with OTP 22 to 25 [Sérgio Almeida]
+
 ## [4.3.2] - 2024-03-11
 
 ### Changed

@@ -27,7 +27,7 @@
 %%% ----------------------------------------------------------------------------
 
 %%------------------------------------------------------------------------------
-%%% @author Oscar Hellström <oscar@hellstrom.st>
+%%% @author Oscar Hellstrï¿½m <oscar@hellstrom.st>
 %%% @doc Top supervisor for the lhttpc application.
 %%% This is normally started by the application behaviour implemented in
 %%% {@link lhttpc}.
@@ -60,6 +60,7 @@ start_link() ->
 %%------------------------------------------------------------------------------
 %% @hidden
 %%------------------------------------------------------------------------------
+-spec init(any()) -> {ok, {supervisor:sup_flags(), [supervisor:child_spec()]}}.
 init(_) ->
     LHTTPCManager = {lhttpc_manager, {lhttpc_manager, start_link,
                      [[{name, lhttpc_manager}]]},
