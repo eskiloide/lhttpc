@@ -1,5 +1,5 @@
 %% @hidden
-%%% -*- coding: latin-1 -*-
+%%% -*- coding: utf-8 -*-
 %%% ----------------------------------------------------------------------------
 %%% Copyright (c) 2009, Erlang Training and Consulting Ltd.
 %%% All rights reserved.
@@ -28,7 +28,7 @@
 
 %%------------------------------------------------------------------------------
 %%% @private
-%%% @author Oscar Hellstr�m <oscar@hellstrom.st>
+%%% @author Oscar Hellström <oscar@hellstrom.st>
 %%% @doc
 %%% This module implements various library functions used in lhttpc.
 %%------------------------------------------------------------------------------
@@ -224,19 +224,9 @@ split_credentials(CredsHostPortPath) ->
     end.
 
 -spec parse_query_string(string()) -> string().
--ifdef(OTP_RELEASE).
--if(?OTP_RELEASE >= 23).
 parse_query_string(User0) ->
     [{User, true}] = uri_string:dissect_query(User0),
     User.
--else.
-parse_query_string(User) ->
-    http_uri:decode(User).
--endif.
--else.
-parse_query_string(User) ->
-    http_uri:decode(User).
--endif.
 
 %%------------------------------------------------------------------------------
 %% @private

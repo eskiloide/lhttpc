@@ -1,5 +1,5 @@
 %% @hidden
-%%% -*- coding: latin-1 -*-
+%%% -*- coding: utf-8 -*-
 %%% ----------------------------------------------------------------------------
 %%% Copyright (c) 2009, Erlang Training and Consulting Ltd.
 %%% All rights reserved.
@@ -28,7 +28,7 @@
 
 %%------------------------------------------------------------------------------
 %%% @private
-%%% @author Oscar Hellstr�m <oscar@hellstrom.st>
+%%% @author Oscar Hellström <oscar@hellstrom.st>
 %%% @doc This module implements the HTTP request handling. This should normally
 %%% not be called directly since it should be spawned by the lhttpc module.
 %%% @end
@@ -129,10 +129,12 @@ request(From, Host, Port, Ssl, Path, Method, Hdrs, Body, Options) ->
     Result = try
         execute(From, Host, Port, Ssl, Path, Method, Hdrs, Body, Options)
     catch
+        throw:Reason ->
+            {response, self(), {error, Reason}};
         error:closed ->
             {response, self(), {error, connection_closed}};
-        error:Reason:_ ->
-            {response, self(), {error, Reason}}
+        error:Reason:Stack ->
+            {response, self(), {error, {Reason, Stack}}}
     end,
     case Result of
         {response, _, {ok, {no_return, _}}} -> ok;
@@ -168,7 +170,7 @@ execute(From, Host, Port, Ssl, Path, Method, Hdrs0, Body, Options) ->
         ProxyUrl when is_list(ProxyUrl), not Ssl ->
             % The point of HTTP CONNECT proxying is to use TLS tunneled in
             % a plain HTTP/1.1 connection to the proxy (RFC2817).
-            error(origin_server_not_https);
+            throw(origin_server_not_https);
         ProxyUrl when is_list(ProxyUrl) ->
             lhttpc_lib:parse_url(ProxyUrl)
     end,
@@ -262,7 +264,7 @@ execute(From, Host, Port, Ssl, Path, Method, Hdrs0, Body, Options) ->
 -spec send_request(client_state()) -> {any(), lhttpc:socket() | 'undefined'} | no_return().
 send_request(#client_state{attempts = 0}) ->
     % Don't try again if the number of allowed attempts is 0.
-    error(closed);
+    throw(connection_closed);
 %we need a socket.
 send_request(#client_state{socket = undefined} = State) ->
     {Host, Port, Ssl} = request_first_destination(State),
@@ -282,16 +284,16 @@ send_request(#client_state{socket = undefined} = State) ->
             send_request(State#client_state{socket = Socket});
         {error, etimedout} ->
             % TCP stack decided to give up
-            error(connect_timeout);
+            throw(connect_timeout);
         {error, timeout} ->
-            error(connect_timeout);
+            throw(connect_timeout);
         {error, 'record overflow'} ->
-            error(ssl_error);
+            throw(ssl_error);
         {error, Reason} ->
             erlang:error(Reason)
     catch
         exit:{{{badmatch, {error, {asn1, _}}}, _}, _} ->
-            error(ssl_decode_error);
+            throw(ssl_decode_error);
         Type:Error:Stack ->
             error_logger:error_msg("Socket connection error: ~p ~p, ~p",
                                    [Type, Error, Stack])
@@ -331,7 +333,7 @@ send_request(#client_state{proxy = #lhttpc_url{}, proxy_setup = false} = State) 
             read_proxy_connect_response(State, nil, nil);
         {error, closed} ->
             lhttpc_sock:close(Socket, Ssl),
-            error(proxy_connection_closed);
+            throw(proxy_connection_closed);
         {error, Reason} ->
             lhttpc_sock:close(Socket, Ssl),
             erlang:error(Reason)
@@ -405,10 +407,10 @@ read_proxy_connect_response(State, StatusCode, StatusText) ->
             end,
             send_request(State2);
         {ok, http_eoh} ->
-            error({proxy_connection_refused, StatusCode, StatusText});
+            throw({proxy_connection_refused, StatusCode, StatusText});
         {error, closed} ->
             lhttpc_sock:close(Socket, ProxyIsSsl),
-            error(proxy_connection_closed);
+            throw(proxy_connection_closed);
         {error, Reason} ->
             erlang:error({proxy_connection_failed, Reason})
     end.
@@ -488,7 +490,7 @@ check_send_result(_State, ok) ->
     ok;
 check_send_result(#client_state{socket = Sock, ssl = Ssl}, {error, Reason}) ->
     lhttpc_sock:close(Sock, Ssl),
-    error(Reason).
+    throw(Reason).
 
 %%------------------------------------------------------------------------------
 %% @private
